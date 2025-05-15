@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model actividad {
+  id                   Int                    @id @default(autoincrement())
+  id_semillero         Int
+  nombre               String                 @db.VarChar(250)
+  descripcion          String?                @db.VarChar(250)
+  url                  String?                @db.VarChar(250)
+  fecha_inicio         DateTime               @db.DateTime(0)
+  fecha_fin            DateTime               @db.DateTime(0)
+  estado               Int                    @db.TinyInt
+  creado_en            DateTime               @db.DateTime(0)
+  eliminado_en         DateTime?              @db.DateTime(0)
+  semillero            semillero              @relation(fields: [id_semillero], references: [id], onUpdate: Restrict, map: "actividad_ibfk_1")
+  estudiante_actividad estudiante_actividad[]
+
+  @@index([id_semillero], map: "id_semillero")
+}
+
+model estudiante_actividad {
+  id            Int       @id @default(autoincrement())
+  id_actividad  Int
+  id_estudiante Int
+  estado        Int       @db.TinyInt
+  actividad     actividad @relation(fields: [id_actividad], references: [id], onUpdate: Restrict, map: "estudiante_actividad_ibfk_1")
+  usuario       usuario   @relation(fields: [id_estudiante], references: [id], onUpdate: Restrict, map: "estudiante_actividad_ibfk_2")
+
+  @@index([id_actividad], map: "id_actividad")
+  @@index([id_estudiante], map: "id_estudiante")
+}
+
+model programa_academico {
+  id           Int         @id @default(autoincrement())
+  id_director  Int         @unique(map: "id_director")
+  nombre       String      @unique(map: "nombre") @db.VarChar(250)
+  estado       Int         @db.TinyInt
+  creado_en    DateTime    @db.DateTime(0)
+  eliminado_en DateTime?   @db.DateTime(0)
+  usuario      usuario     @relation(fields: [id_director], references: [id], onUpdate: Restrict, map: "programa_academico_ibfk_1")
+  semillero    semillero[]
+}
+
+model rol {
+  id     Int    @id @default(autoincrement())
+  nombre String @db.VarChar(50)
+}
+
+model semillero {
+  id                       Int                @id @default(autoincrement())
+  id_prog_acad             Int
+  id_docente               Int                @unique(map: "id_docente")
+  nombre                   String             @unique(map: "nombre") @db.VarChar(250)
+  descripcion              String?            @db.VarChar(250)
+  cupo                     Int
+  fecha_limite_inscripcion DateTime           @db.DateTime(0)
+  fecha_inicio             DateTime           @db.DateTime(0)
+  fecha_fin                DateTime           @db.DateTime(0)
+  cant_act_aprobatoria     Int
+  estado                   Int                @db.TinyInt
+  creado_en                DateTime           @db.DateTime(0)
+  eliminado_en             DateTime?          @db.DateTime(0)
+  actividad                actividad[]
+  programa_academico       programa_academico @relation(fields: [id_prog_acad], references: [id], onUpdate: Restrict, map: "semillero_ibfk_1")
+  usuario                  usuario            @relation(fields: [id_docente], references: [id], onUpdate: Restrict, map: "semillero_ibfk_2")
+
+  @@index([id_prog_acad], map: "id_prog_acad")
+}
+
+model usuario {
+  id                       Int                    @id @default(autoincrement())
+  id_rol                   Int
+  nombre_completo          String                 @db.VarChar(250)
+  correo_personal          String                 @unique(map: "correo_personal") @db.VarChar(250)
+  correo_institucional     String                 @unique(map: "correo_institucional") @db.VarChar(250)
+  telefono                 String                 @unique(map: "telefono") @db.VarChar(50)
+  contrasena               String                 @db.VarChar(250)
+  estado                   Int                    @db.TinyInt
+  token_reseteo            String?                @db.VarChar(250)
+  token_reseteo_expiracion Int?
+  creado_en                DateTime               @db.DateTime(0)
+  eliminado_en             DateTime?              @db.DateTime(0)
+  estudiante_actividad     estudiante_actividad[]
+  programa_academico       programa_academico?
+  semillero                semillero?
+
+  @@index([id_rol], map: "id_rol")
+}
